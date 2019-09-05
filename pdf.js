@@ -86,6 +86,7 @@
     .content {
       max-width: 100%;
       padding: var(--border-radius);
+      box-sizing: border-box;
     }
     .controls {
       display: grid;
