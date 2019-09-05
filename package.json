@@ -1,10 +1,10 @@
 {
   "name": "@wgnhs/elements",
-  "version": "0.2.3",
+  "version": "0.2.4",
   "description": "Generic Layout Web Components for WGNHS apps",
   "repository": {
-    "type" : "git",
-    "url" : "https://github.com/wgnhs/wgnhs-elements.git"
+    "type": "git",
+    "url": "https://github.com/wgnhs/wgnhs-elements.git"
   },
   "author": {
     "name": "Wisconsin Geological and Natural History Survey",
