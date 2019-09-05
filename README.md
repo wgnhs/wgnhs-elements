@@ -46,6 +46,16 @@ Contains a general purpose front-end router based off of [UI-Router](https://ui-
 Contains an in-browser PDF renderer and controls. Based off of [Mozilla's PDF.js](https://github.com/mozilla/pdf.js)
 * pdf-view
 
+Requires import of library:
+```html
+  <!-- Load PDF renderer -->
+  <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@2.2.228/build/pdf.min.js"></script>
+
+  <!-- Load WGNHS PDF viewer -->
+  <script src="https://cdn.jsdelivr.net/npm/@wgnhs/elements@^0/dist/common.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@wgnhs/elements@^0/dist/pdf.min.js"></script>
+```
+
 
 
 # Development
