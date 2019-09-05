@@ -76,6 +76,37 @@ at `http://127.0.0.1:8081/wgnhs-elements/`
 
 The server will watch for source changes and automatically refresh the browser.
 
+## Creating your own components
+Replace `{{class-name}}` with a `CamelCase` name and `{{tag-name}}` with the corresponding `dash-separated` name
+```js
+import { LitElement, html, css } from 'lit-element';
+import { styles } from 'wgnhs-common';
+
+export class {{class-name}} extends LitElement {
+  static get properties() {
+    return {
+
+    };
+  }
+
+  constructor() {
+    super();
+  }
+
+  static get styles() {
+    return [
+      ...styles,
+      css`
+    `];
+  }
+
+  render() {
+    return html`
+    `;
+  }
+}
+customElements.define('{{tag-name}}', {{class-name}});
+```
 
 ## Building
 ```
