@@ -73,10 +73,3 @@ export default getDirectories(join(__dirname, rootDir)).reduce((agg, name) => {
   agg.push(buildScripts({dir: name, min: true}));
   return agg;
 }, []);
-
-// export default [
-//   buildScripts({dir: 'common'}),
-//   buildScripts({dir: 'common', min: true}),
-//   buildScripts({dir: 'layout'}),
-//   buildScripts({dir: 'layout', min: true})
-// ];

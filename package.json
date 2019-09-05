@@ -2,6 +2,9 @@
   "name": "wgnhs-elements",
   "version": "0.1.0",
   "description": "",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "run-s build:clean build:prepare build:start",
     "build:clean": "rimraf dist",
