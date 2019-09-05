@@ -20,7 +20,11 @@
     "start": "run-s develop",
     "pages": "run-s build pages:ghpages",
     "pages:ghpages": "gh-pages -d dist",
-    "postversion": "run-s postversion:push-tags postversion:publish pages",
+    "release": "run-s release:install build release:config release:version",
+    "release:install": "npm ci",
+    "release:config": "npm config set access public",
+    "release:version": "npm version patch",
+    "postversion": "run-s postversion:push-tags postversion:publish pages:ghpages",
     "postversion:publish": "npm publish",
     "postversion:push-tags": "git push && git push --tags"
   },
