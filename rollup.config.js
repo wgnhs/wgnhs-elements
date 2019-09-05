@@ -2,6 +2,8 @@ import minify from 'rollup-plugin-minify-es';
 import minifyHTML from 'rollup-plugin-minify-html-literals';
 import resolve from 'rollup-plugin-node-resolve';
 import filesize from 'rollup-plugin-filesize';
+import stringPlugin from 'rollup-plugin-string';
+import urlResolve from 'rollup-plugin-url-resolve';
 
 import { readdirSync } from 'fs';
 import { join } from 'path';
@@ -37,6 +39,13 @@ function getExtras(name) {
 function buildPlugins({min=false}) {
   let result = [];
   result.push(resolve());
+  result.push(urlResolve());
+  result.push(stringPlugin.string({
+  include: [
+    /^https:.*/,
+    "**/*.css"
+  ]
+  }))
 
   if (min) {
     result.push(minifyHTML());
