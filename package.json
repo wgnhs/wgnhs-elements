@@ -20,7 +20,7 @@
     "start": "run-s develop",
     "pages": "run-s build pages:ghpages",
     "pages:ghpages": "gh-pages -d dist",
-    "postversion": "run-s postversion:push-tags pages",
+    "postversion": "run-s postversion:push-tags publish pages",
     "postversion:push-tags": "git push && git push --tags"
   },
   "author": "davidmsibley",
