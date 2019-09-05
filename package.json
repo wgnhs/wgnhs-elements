@@ -1,7 +1,17 @@
 {
   "name": "@wgnhs/elements",
   "version": "0.2.3",
-  "description": "",
+  "description": "Generic Layout Web Components for WGNHS apps",
+  "repository": {
+    "type" : "git",
+    "url" : "https://github.com/wgnhs/wgnhs-elements.git"
+  },
+  "author": {
+    "name": "Wisconsin Geological and Natural History Survey",
+    "email": "devops@wgnhs.wisc.edu",
+    "url": "https://wgnhs.wisc.edu"
+  },
+  "license": "MIT",
   "files": [
     "dist"
   ],
@@ -28,8 +38,6 @@
     "postversion:publish": "npm publish",
     "postversion:push-tags": "git push && git push --tags"
   },
-  "author": "davidmsibley",
-  "license": "MIT",
   "devDependencies": {
     "cpy-cli": "^2.0.0",
     "gh-pages": "^2.0.1",

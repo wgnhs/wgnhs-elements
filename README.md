@@ -1,4 +1,4 @@
-# wgnhs-layout
+# @wgnhs/elements
 Generic Layout Web Components for WGNHS apps
 
 # Usage
