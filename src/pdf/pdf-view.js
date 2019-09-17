@@ -308,10 +308,10 @@ export class PDFViewButton extends LitElement {
     <div class="container" ?data-closed=${this.missing}>
       <button-link href="${this.src}" target="_blank" download>
         <i slot="content-before" class="material-icons" title="Download">save_alt</i>
-        <span slot="content">Download</span>
+        <span slot="content"><slot name="download-text">Download</slot></span>
       </button-link>
       <app-collapsible @open="${this.toggle}" button>
-        <span slot="header">View</span>
+        <span slot="header"><slot name="view-text">View</slot></span>
         <i slot="header-after" class="material-icons" title="View">${
           (this.alt)?'chevron_left':'chevron_right'
         }</i>
