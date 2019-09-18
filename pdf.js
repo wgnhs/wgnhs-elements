@@ -56,8 +56,16 @@
         rotate: {
           type: Number
         },
+        preserveRotate: {
+          type: Boolean,
+          attribute: 'preserve-rotate'
+        },
         zoom: {
           type: Number
+        },
+        preserveZoom: {
+          type: Boolean,
+          attribute: 'preserve-zoom'
         }
       };
     }
@@ -66,8 +74,8 @@
       super();
       this.cache = {};
       this.renderer = new PDFRenderer();
-      this.rotate = 0;
-      this.zoom = 1;
+      this.rotate = PDFViewPanel.INITIAL_ROTATE;
+      this.zoom = PDFViewPanel.INITIAL_ZOOM;
     }
 
     static get styles() {
@@ -145,6 +153,10 @@
       return 4;
     }
 
+    static get INITIAL_ROTATE() {
+      return 0;
+    }
+
     get rotate() {
       return this._rotate;
     }
@@ -174,6 +186,10 @@
     }
     get isMinZoom() {
       return this.zoom <= PDFViewPanel.MIN_ZOOM;
+    }
+
+    static get INITIAL_ZOOM() {
+      return 1;
     }
 
     get zoom() {
@@ -229,6 +245,12 @@
       this.dispatchEvent(new CustomEvent(TOGGLE_EVENT,
         {bubbles: true, composed: true, detail: {url, closed: false}}));
       this.pdfsrc = url;
+      if (!this.preserveRotate) {
+        this.rotate = PDFViewPanel.INITIAL_ROTATE;
+      }
+      if (!this.preserveZoom) {
+        this.zoom = PDFViewPanel.INITIAL_ZOOM;
+      }
     }
 
     hide() {
