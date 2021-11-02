@@ -55,7 +55,7 @@
     "rollup-plugin-url-resolve": "^0.1.1"
   },
   "dependencies": {
-    "@uirouter/core": "^5.0.23",
+    "@uirouter/core": "^6.0.8",
     "lit-element": "^2.1.0"
   }
 }
