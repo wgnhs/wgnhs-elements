@@ -1,6 +1,6 @@
 {
   "name": "@wgnhs/elements",
-  "version": "0.2.7",
+  "version": "0.2.8",
   "description": "Generic Layout Web Components for WGNHS apps",
   "repository": {
     "type": "git",
