@@ -13,24 +13,10 @@ class PDFRendererMultipage {
   render(url, zoom) {
     let dataUrls = [];
     if (url) {
-      let loadingTask = pdfjsLib.getDocument(url);
-      return loadingTask.promise.then(async (pdf)=>{
-        // console.log('PDF Loaded');
-        console.log("pdf has " + pdf.numPages + " pages");
-        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-          console.log("working on page " + pageNum);
-          // 1. Create a canvas element for this specific page
-          let canvasEl = document.createElement('canvas');
-          // 2. Render the page onto its canvas
-          this.renderPageToCanvas(pdf, pageNum, canvasEl, zoom).then(function () {
-            console.log("zoom: " + zoom);
-            let durl = canvasEl.toDataURL();
-            dataUrls.push(durl);
-          });   
-        }
+        dataUrls.push(url);
         console.log("returning data urls");
+        console.log(dataUrls);
         return dataUrls;
-      });
     }
     return Promise.reject(null);
   }
@@ -151,21 +137,13 @@ export class PDFViewPanelMultipage extends LitElement {
     .container {
       min-height: 10em;
       width: 100%;
-      display: grid;
-      grid-template-columns: 1fr;
-      grid-gap: var(--border-radius);
       justify-content: center;
       overflow: auto;
-    }
-    .img-wrapper {
-      width: 100%;
     }
     .content {
       max-width: 100%;
       padding: var(--border-radius);
       box-sizing: border-box;
-      display: block;
-      margin: 25px;
     }
     .controls {
       display: grid;
@@ -196,12 +174,17 @@ export class PDFViewPanelMultipage extends LitElement {
     [data-closed] {
       display: none;
     }
+    #toolbarViewerRight {
+      display: none;
+    }
     `];
   }
+
 
   render() {
     console.log("render data")
     return html`
+    
     <div class="controls">
       <button class="control" @click=${this.hide}><i class="material-icons" title="Hide">close</i></button>
       <button class="control" @click=${this.zoomIn} ?disabled=${this.isMaxZoom}><i class="material-icons" title="Zoom In">zoom_in</i></button>
@@ -211,10 +194,22 @@ export class PDFViewPanelMultipage extends LitElement {
     </div>
     <app-spinner ?data-closed=${this.imgsrc}></app-spinner>
     <div class="container" ?data-closed=${!this.imgsrc}>
+      <div class="banner">This is a preview showing the first image in the set. <button>View all images</button></div>
       ${this.imageTag}
       <slot></slot>
     </div>
     `;
+
+    /*return html`
+    <div class="container">
+      <pdfjs-viewer-element id="viewer"
+        src="${this.pdfsrc}"
+        class="right-panel positioned"
+        style="height: 100dvh;"
+      >
+      </pdfjs-viewer-element>
+    </div>
+    `;*/
   }
 
   get imgsrc() {
@@ -294,15 +289,11 @@ export class PDFViewPanelMultipage extends LitElement {
   }
 
   get imageTag() {
-    let imgTemplates = [];
     if (!this.imgsrc) {
       return '';
     } else {
-      for (const img of this.imgsrc) {
-        imgTemplates.push(html`<div class="img-wrapper" style="${this.contentTransform}"><img class="content" src="${img}" style="${this.contentTransform}"/></div>`);
+        return html`<div class="img-wrapper" style="${this.contentTransform}"><img class="content" src="${this.imgsrc}" style="${this.contentTransform}"/></div>`;
       }
-      return imgTemplates;
-    }
   }
 
   get contentTransform() {
@@ -340,6 +331,7 @@ export class PDFViewPanelMultipage extends LitElement {
   _getFromCache(url) {
     return new Promise((resolve, reject) => {
       let result = this.cache[url];
+      console.log("cache result is " + result);
       if (result) {
         resolve(result);
       } else {
@@ -348,16 +340,15 @@ export class PDFViewPanelMultipage extends LitElement {
     });
   }
 
+
   request(url) {
     console.log('request', url);
     return this._getFromCache(url).catch(() => {
-      return this.renderer.render(url, this.zoom).then((value) => {
         console.log("request value")
-        console.log(value);
-        this.cache[url] = value;
+        console.log(url);
+        this.cache[url] = url;
         this.requestUpdate('cache');
-        return value;
-      });
+        return url;
     });
   }
 
@@ -407,13 +398,9 @@ export class PDFViewButtonMultipage extends LitElement {
     console.log("render buttons")
     return html`
     <div class="container" ?data-closed=${this.missing}>
-      <button-link href="${this.src}" target="_blank" download>
-        <i slot="content-before" class="material-icons" title="Download">save_alt</i>
-        <span slot="content"><slot name="download-text">Download</slot></span>
-      </button-link>
       <app-collapsible @open="${this.toggle}" button>
-        <span slot="header"><slot name="view-text">View</slot></span>
-        <i slot="header-after" class="material-icons" title="View">${
+        <span slot="header"><slot name="view-text">View/download images</slot></span>
+        <i slot="header-after" class="material-icons" title="Preview">${
           (this.alt)?'chevron_left':'chevron_right'
         }</i>
       </app-collapsible>
@@ -423,11 +410,14 @@ export class PDFViewButtonMultipage extends LitElement {
 
   updated(prev) {
     if ((prev.has('panel') || prev.has('src'))) {
-      this.handleMissingPDF();
+      console.log(this.missing);
+      this.resetMissingImageCheck();
+      console.log(this.missing);
       if (this.panel && this.src) {
         this.panel.request(this.src)
-          .then(this.handleLoadedPDF.bind(this), this.handleMissingPDF.bind(this));
+          .then(this.checkImageExistence(this));
       }
+      
     }
   }
 
@@ -439,7 +429,7 @@ export class PDFViewButtonMultipage extends LitElement {
     }
   }
 
-  handleMissingPDF() {
+  resetMissingImageCheck() {
     if (!this.missing) {
       this.missing = true;
     }
@@ -458,6 +448,22 @@ export class PDFViewButtonMultipage extends LitElement {
       this.alt = false;
     }
     this.requestUpdate();
+  }
+
+  async checkImageExistence() {
+    console.log("checking for missing image")
+    try {
+      const response = await fetch(this.src, { method: 'HEAD' });
+      // If status is 200-299, the file exists
+      if (response.ok) {
+        this.missing = false;
+      }
+      this.imageExists = response.ok; 
+    } catch (error) {
+      // Network error or CORS issue
+      this.missing = true;
+    }
+    console.log(this.missing);
   }
 
   connectedCallback() {
