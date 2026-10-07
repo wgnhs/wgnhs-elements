@@ -128,6 +128,8 @@ export class PDFViewPanelMultipage extends LitElement {
     this.renderer = new PDFRendererMultipage();
     this.rotate = PDFViewPanelMultipage.INITIAL_ROTATE;
     this.zoom = PDFViewPanelMultipage.INITIAL_ZOOM;
+    this.pdfViewerOpen = false;
+    this.pdfViewerLoading = false;
   }
 
   static get styles() {
@@ -184,19 +186,19 @@ export class PDFViewPanelMultipage extends LitElement {
   render() {
     console.log("render data")
     return html`
-    
-    <div class="controls">
+    <div class="controls" ?data-closed=${this.pdfViewerOpen} >
       <button class="control" @click=${this.hide}><i class="material-icons" title="Hide">close</i></button>
       <button class="control" @click=${this.zoomIn} ?disabled=${this.isMaxZoom}><i class="material-icons" title="Zoom In">zoom_in</i></button>
       <button class="control" @click=${this.zoomOut} ?disabled=${this.isMinZoom}><i class="material-icons" title="Zoom Out">zoom_out</i></button>
       <button class="control" @click=${this.rotateLeft}><i class="material-icons" title="Rotate Left">rotate_left</i></button>
       <button class="control" @click=${this.rotateRight}><i class="material-icons" title="Rotate Right">rotate_right</i></button>
     </div>
-    <app-spinner ?data-closed=${this.imgsrc}></app-spinner>
     <div class="container" ?data-closed=${!this.imgsrc}>
-      <div class="banner">This is a preview showing the first image in the set. <button>View all images</button></div>
+      <div class="banner" ?data-closed=${this.pdfViewerOpen} >This is a preview showing the first image in the set. <button @click=${this.togglePdfViewer}>View all images</button></div>
       ${this.imageTag}
       <slot></slot>
+     <app-spinner ?data-closed=${!this.pdfViewerLoading}></app-spinner>
+      ${this.pdfViewerElement}
     </div>
     `;
 
@@ -211,6 +213,48 @@ export class PDFViewPanelMultipage extends LitElement {
     </div>
     `;*/
   }
+
+  togglePdfViewer(){
+    console.log("pdf viewer button clicked")
+    this.pdfViewerOpen = !this.pdfViewerOpen
+    this.requestUpdate();
+    if(this.pdfViewerOpen && !this.pdfViewerLoaded) {
+      const pdfUrl = this.pdfsrc.replace("-preview.jpg", ".pdf")
+      
+      console.log("PDF URL");
+      console.log(pdfUrl);
+      this.pdfViewerLoading = true;
+      this.pdfViewerElement = html`<div class="container">
+      <pdfjs-viewer-element id="viewer" ?data-closed=${!this.pdfViewerOpen}
+        src="${pdfUrl}"
+        class="right-panel positioned"
+        style="height: 100dvh;"
+      >
+        </pdfjs-viewer-element>
+      </div>`;
+      this.requestUpdate().then(() => {
+        console.log("request updating");
+        const viewerElement = this.shadowRoot.querySelector('pdfjs-viewer-element');
+        console.log(viewerElement);
+        viewerElement.initPromise.then(({ viewerApp }) => {
+          // Optional: listen to document loaded event via viewerApp if needed
+          console.log("init promise");
+          viewerApp.eventBus.on('pagesloaded', (evt) => {
+            this.pdfViewerLoading = false;
+            this.requestUpdate('pdfViewerLoading');
+            console.log(this.pdfViewerLoading);
+          });
+        }).catch((error) => {
+          console.error('Failed to load PDF viewer:', error);
+          // Handle error state
+        });
+        this.pdfViewerLoaded = true;
+      });
+    } else {
+      this.pdfViewerElement = html``;
+    }
+  }
+    
 
   get imgsrc() {
     return this.cache[this.pdfsrc];
@@ -292,7 +336,7 @@ export class PDFViewPanelMultipage extends LitElement {
     if (!this.imgsrc) {
       return '';
     } else {
-        return html`<div class="img-wrapper" style="${this.contentTransform}"><img class="content" src="${this.imgsrc}" style="${this.contentTransform}"/></div>`;
+        return html`<div class="img-wrapper" ?data-closed=${this.pdfViewerOpen} style="${this.contentTransform}"><img class="content" src="${this.imgsrc}" style="${this.contentTransform}"/></div>`;
       }
   }
 
