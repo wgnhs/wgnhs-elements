@@ -152,7 +152,6 @@ export class PDFViewPanelMultipage extends LitElement {
       grid-column-template: 1fr;
       grid-gap: var(--border-radius);
       position: absolute;
-      top: 0;
       right: var(--border-radius);
       margin: var(--border-radius);
       z-index: 10;
@@ -173,12 +172,65 @@ export class PDFViewPanelMultipage extends LitElement {
     .control:hover {
       color: var(--el-color-hover, var(--palette-900));
     }
-    [data-closed] {
-      display: none;
-    }
     #toolbarViewerRight {
       display: none;
     }
+    .banner {
+      background-color: var(--palette-light);
+      padding: .5rem 1rem;
+      font-size: .8rem;
+      display: block;
+      float: left;
+      width: 100%;
+    }
+    .banner p {
+      margin: 0;
+      font-size: inherit;
+      font-style: italic;
+      max-width: 80%;
+      display: block;
+      float: left;
+    }
+    .uw-button {
+      display: block;
+      float: left;
+      text-align: center;
+      font-family: var(--uwButtonFont);
+      font-weight: 500;
+      line-height: 1.2;
+      padding: .5rem .75rem;
+      margin: 0 .5rem;
+      background: #036796;
+      color: #fff;
+      box-shadow: 2px 2px 6px 0 rgba(0, 0, 0, .25);
+      position: relative;
+      cursor: pointer;
+      -webkit-appearance: none;
+      transition: all .25s ease-out;
+      vertical-align: middle;
+      border: 2px solid #036796;
+      border-radius: .5rem;
+      text-decoration: none !important;
+      }
+      .preview-image {
+        position: relative;
+        display: block;
+        float: left;
+        width: 100%;
+      }
+      app-spinner {
+          background: rgba(255, 255, 255, 0.8);
+          position: absolute;
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          padding-top: 25%;
+      }
+    [data-closed], .banner [data-closed] {
+      display: none;
+    }
+    
     `];
   }
 
@@ -186,18 +238,24 @@ export class PDFViewPanelMultipage extends LitElement {
   render() {
     console.log("render data")
     return html`
-    <div class="controls" ?data-closed=${this.pdfViewerOpen} >
-      <button class="control" @click=${this.hide}><i class="material-icons" title="Hide">close</i></button>
-      <button class="control" @click=${this.zoomIn} ?disabled=${this.isMaxZoom}><i class="material-icons" title="Zoom In">zoom_in</i></button>
-      <button class="control" @click=${this.zoomOut} ?disabled=${this.isMinZoom}><i class="material-icons" title="Zoom Out">zoom_out</i></button>
-      <button class="control" @click=${this.rotateLeft}><i class="material-icons" title="Rotate Left">rotate_left</i></button>
-      <button class="control" @click=${this.rotateRight}><i class="material-icons" title="Rotate Right">rotate_right</i></button>
-    </div>
+    
     <div class="container" ?data-closed=${!this.imgsrc}>
-      <div class="banner" ?data-closed=${this.pdfViewerOpen} >This is a preview showing the first image in the set. <button @click=${this.togglePdfViewer}>View all images</button></div>
-      ${this.imageTag}
+      <div class="banner" ?data-closed=${this.pdfViewerOpen}>
+        <p>This is a preview showing the first image in the set. Click the "View all images" button to load all images in high-resolution. Large image sets may take a moment to load.</p>
+        <button class="uw-button" @click=${this.togglePdfViewer}>View all images</button> 
+      </div>
+      <div class="preview-image">
+        <div class="controls" ?data-closed=${this.pdfViewerOpen} >
+          <button class="control" @click=${this.hide}><i class="material-icons" title="Hide">close</i></button>
+          <button class="control" @click=${this.zoomIn} ?disabled=${this.isMaxZoom}><i class="material-icons" title="Zoom In">zoom_in</i></button>
+          <button class="control" @click=${this.zoomOut} ?disabled=${this.isMinZoom}><i class="material-icons" title="Zoom Out">zoom_out</i></button>
+          <button class="control" @click=${this.rotateLeft}><i class="material-icons" title="Rotate Left">rotate_left</i></button>
+          <button class="control" @click=${this.rotateRight}><i class="material-icons" title="Rotate Right">rotate_right</i></button>
+        </div>
+        ${this.imageTag}
+      </div>
       <slot></slot>
-     <app-spinner ?data-closed=${!this.pdfViewerLoading}></app-spinner>
+      <app-spinner ?data-closed=${!this.pdfViewerLoading}></app-spinner>
       ${this.pdfViewerElement}
     </div>
     `;
@@ -225,7 +283,7 @@ export class PDFViewPanelMultipage extends LitElement {
       console.log(pdfUrl);
       this.pdfViewerLoading = true;
       this.pdfViewerElement = html`<div class="container">
-      <pdfjs-viewer-element id="viewer" ?data-closed=${!this.pdfViewerOpen}
+      <pdfjs-viewer-element id="viewer"
         src="${pdfUrl}"
         class="right-panel positioned"
         style="height: 100dvh;"
