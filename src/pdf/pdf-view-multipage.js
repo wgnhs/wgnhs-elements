@@ -5,103 +5,16 @@ export { ButtonLink } from 'wgnhs-layout';
 export { AppSpinner } from 'wgnhs-layout';
 
 
-const pdfjsLib = window['pdfjs-dist/build/pdf'];
-
 const TOGGLE_EVENT = 'toggle-pdf-panel';
-
-class PDFRendererMultipage {
-  render(url, zoom) {
-    let dataUrls = [];
-    if (url) {
-        dataUrls.push(url);
-        console.log("returning data urls");
-        console.log(dataUrls);
-        return dataUrls;
-    }
-    return Promise.reject(null);
-  }
-
-  async renderPageToCanvas(pdf, pageNum, canvasEl, zoom) {
-    const page = await pdf.getPage(pageNum);
-    //var scale = 1.0;
-    var viewport = page.getViewport({scale: zoom});
-
-    // Prepare canvas using PDF page dimensions
-    var canvas = canvasEl;
-    var context = canvas.getContext('2d');
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-
-    // Render PDF page into canvas context
-    var renderContext = {
-      canvasContext: context,
-      viewport: viewport
-    };
-    var renderTask = page.render(renderContext);
-    return renderTask.promise;
-
-  }
-}
-
-
-
-
-
-/*class PDFRenderer {
-  
-  render(url) {
-    console.log("local pdf renderer")
-    const viewer_parent = document.querySelector("pdf-view-panel");
-    const viewer = viewer_parent.querySelector("div.container");
-    console.log(viewer);
-    if (url) {
-      let loadingTask = pdfjsLib.getDocument(url);
-      return loadingTask.promise.then(async (pdf) => {
-        console.log("hello new pdf code");
-        console.log("pdf has " + pdf.numPages + " pages");
-        for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
-          console.log("working on page " + pageNum);
-          // 1. Create a canvas element for this specific page
-          const canvas = document.createElement('canvas');
-          console.log(viewer);
-          //canvas.className = 'pdf-page-canvas';
-          console.log(canvas)
-          // 2. Render the page onto its canvas
-          this.renderPage(pdf, pageNum, canvas).then(
-            console.log("appending canvas"),
-            viewer.appendChild(canvas)
-          );   
-      }
-      });
-    }
-  }
-
-  async renderPage(pdf, pageNum, canvas) {
-    console.log("rendering page");
-    var scale = 1.0;
-    const page = await pdf.getPage(pageNum);
-    const viewport = page.getViewport({ scale: scale });
-    const context = canvas.getContext('2d');
-    
-    canvas.height = viewport.height;
-    canvas.width = viewport.width;
-    
-    const renderContext = {
-      canvasContext: context,
-      viewport: viewport
-    };
-    
-    await page.render(renderContext).promise;
-  };
-  https://www.nutrient.io/blog/complete-guide-to-pdfjs/
-  https://www.nutrient.io/blog/how-to-build-a-javascript-pdf-viewer-with-pdfjs/
-}*/
-
 
 export class PDFViewPanelMultipage extends LitElement {
   static get properties() {
     return {
-      pdfsrc: {
+      previewImgSrc: {
+        type: String,
+        attribute: false
+      },
+      pdfSrc: {
         type: String,
         attribute: false
       },
@@ -124,8 +37,6 @@ export class PDFViewPanelMultipage extends LitElement {
 
   constructor() {
     super();
-    this.cache = {};
-    this.renderer = new PDFRendererMultipage();
     this.rotate = PDFViewPanelMultipage.INITIAL_ROTATE;
     this.zoom = PDFViewPanelMultipage.INITIAL_ZOOM;
     this.pdfViewerOpen = false;
@@ -230,16 +141,19 @@ export class PDFViewPanelMultipage extends LitElement {
     [data-closed], .banner [data-closed] {
       display: none;
     }
-    
+      .img-wrapper {
+        display: flex;
+        justify-content: center; /* Horizontally centers the image */
+        align-items: center;  
+      }
     `];
   }
 
 
   render() {
-    console.log("render data")
+    console.log("render pdf viewer")
     return html`
-    
-    <div class="container" ?data-closed=${!this.imgsrc}>
+    <div class="container" ?data-closed=${!this.previewImgSrc}>
       <div class="banner" ?data-closed=${this.pdfViewerOpen}>
         <p>This is a preview showing the first image in the set. Click the "View all images" button to load all images in high-resolution. Large image sets may take a moment to load.</p>
         <button class="uw-button" @click=${this.togglePdfViewer}>View all images</button> 
@@ -259,17 +173,6 @@ export class PDFViewPanelMultipage extends LitElement {
       ${this.pdfViewerElement}
     </div>
     `;
-
-    /*return html`
-    <div class="container">
-      <pdfjs-viewer-element id="viewer"
-        src="${this.pdfsrc}"
-        class="right-panel positioned"
-        style="height: 100dvh;"
-      >
-      </pdfjs-viewer-element>
-    </div>
-    `;*/
   }
 
   togglePdfViewer(){
@@ -277,14 +180,12 @@ export class PDFViewPanelMultipage extends LitElement {
     this.pdfViewerOpen = !this.pdfViewerOpen
     this.requestUpdate();
     if(this.pdfViewerOpen && !this.pdfViewerLoaded) {
-      const pdfUrl = this.pdfsrc.replace("-preview.jpg", ".pdf")
-      
       console.log("PDF URL");
-      console.log(pdfUrl);
+      console.log(this.pdfSrc);
       this.pdfViewerLoading = true;
       this.pdfViewerElement = html`<div class="container">
       <pdfjs-viewer-element id="viewer"
-        src="${pdfUrl}"
+        src="${this.pdfSrc}"
         class="right-panel positioned"
         style="height: 100dvh;"
       >
@@ -308,14 +209,11 @@ export class PDFViewPanelMultipage extends LitElement {
         });
         this.pdfViewerLoaded = true;
       });
+    } else if (this.pdfViewerOpen && this.pdfViewerLoaded) {
+      this.requestFullscreen.update();
     } else {
       this.pdfViewerElement = html``;
     }
-  }
-    
-
-  get imgsrc() {
-    return this.cache[this.pdfsrc];
   }
 
   static get MOD_ROTATE() {
@@ -391,10 +289,10 @@ export class PDFViewPanelMultipage extends LitElement {
   }
 
   get imageTag() {
-    if (!this.imgsrc) {
+    if (!this.previewImgSrc) {
       return '';
     } else {
-        return html`<div class="img-wrapper" ?data-closed=${this.pdfViewerOpen} style="${this.contentTransform}"><img class="content" src="${this.imgsrc}" style="${this.contentTransform}"/></div>`;
+        return html`<div class="img-wrapper" ?data-closed=${this.pdfViewerOpen} style="${this.contentTransform}"><img class="content" ?data-closed=${this.pdfViewerOpen} src="${this.previewImgSrc}"/></div>`;
       }
   }
 
@@ -410,50 +308,34 @@ export class PDFViewPanelMultipage extends LitElement {
     return result;
   }
 
-  show(url) {
-    console.log('show', url);
+  show(previewUrl, pdfUrl) {
+    console.log('show', previewUrl);
     this.dispatchEvent(new CustomEvent(TOGGLE_EVENT,
-      {bubbles: true, composed: true, detail: {url, closed: false}}));
-    this.pdfsrc = url;
+      {bubbles: true, composed: true, detail: {previewUrl, closed: false}}));
+    this.previewImgSrc = previewUrl;
+    this.pdfSrc = pdfUrl;
     if (!this.preserveRotate) {
       this.rotate = PDFViewPanelMultipage.INITIAL_ROTATE;
     }
     if (!this.preserveZoom) {
       this.zoom = PDFViewPanelMultipage.INITIAL_ZOOM;
     }
+    this.requestUpdate();
   }
 
   hide() {
-    // console.log('hide');
-    this.pdfsrc = null;
+    console.log('hide panel');
+    this.pdfViewerOpen = false;
+    this.pdfViewerLoaded = false;
+    this.pdfViewerLoading = false;
+    //this.pdfViewerLoaded = false;
+    //this.togglePdfViewer();
+    //this.previewImgSrc = null;
+    //this.pdfSrc = null;
+    this.requestUpdate();
     this.dispatchEvent(new CustomEvent(TOGGLE_EVENT,
       {bubbles: true, composed: true, detail: {closed: true}}));
   }
-
-  _getFromCache(url) {
-    return new Promise((resolve, reject) => {
-      let result = this.cache[url];
-      console.log("cache result is " + result);
-      if (result) {
-        resolve(result);
-      } else {
-        reject('Not in cache');
-      }
-    });
-  }
-
-
-  request(url) {
-    console.log('request', url);
-    return this._getFromCache(url).catch(() => {
-        console.log("request value")
-        console.log(url);
-        this.cache[url] = url;
-        this.requestUpdate('cache');
-        return url;
-    });
-  }
-
 }
 customElements.define('pdf-view-panel-multipage', PDFViewPanelMultipage);
 
@@ -461,6 +343,9 @@ export class PDFViewButtonMultipage extends LitElement {
   static get properties() {
     return {
       src: {
+        type: String
+      },
+      preview: {
         type: String
       },
       panel: {
@@ -484,11 +369,6 @@ export class PDFViewButtonMultipage extends LitElement {
     return [
       ...styles,
       css`
-    .container {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      grid-gap: var(--border-radius);
-    }
 
     [data-closed] {
       visibility: hidden;
@@ -501,7 +381,7 @@ export class PDFViewButtonMultipage extends LitElement {
     return html`
     <div class="container" ?data-closed=${this.missing}>
       <app-collapsible @open="${this.toggle}" button>
-        <span slot="header"><slot name="view-text">View/download images</slot></span>
+        <span slot="header"><slot name="download-text">View/download images</slot></span>
         <i slot="header-after" class="material-icons" title="Preview">${
           (this.alt)?'chevron_left':'chevron_right'
         }</i>
@@ -511,15 +391,18 @@ export class PDFViewButtonMultipage extends LitElement {
   }
 
   updated(prev) {
+    console.log("updated triggered");
+    console.log(prev);
     if ((prev.has('panel') || prev.has('src'))) {
-      console.log(this.missing);
-      this.resetMissingImageCheck();
-      console.log(this.missing);
-      if (this.panel && this.src) {
-        this.panel.request(this.src)
-          .then(this.checkImageExistence(this));
+      //console.log(this.missing);
+      //this.resetMissingImageCheck();
+      //console.log(this.missing);
+      console.log(this.panel);
+      console.log(this.preview);
+      if (this.panel && this.preview) {
+        this.checkImageExistence(this);
       }
-      
+      this.requestUpdate();
     }
   }
 
@@ -527,8 +410,9 @@ export class PDFViewButtonMultipage extends LitElement {
     if (this.alt) {
       this.panel.hide();
     } else {
-      this.panel.show(this.src);
+      this.panel.show(this.preview, this.src);
     }
+    this.requestUpdate();
   }
 
   resetMissingImageCheck() {
@@ -544,7 +428,7 @@ export class PDFViewButtonMultipage extends LitElement {
   }
 
   handleAlt(e) {
-    if (e.detail.url === this.src) {
+    if (e.detail.previewUrl === this.preview) {
       this.alt = true;
     } else {
       this.alt = false;
@@ -555,7 +439,7 @@ export class PDFViewButtonMultipage extends LitElement {
   async checkImageExistence() {
     console.log("checking for missing image")
     try {
-      const response = await fetch(this.src, { method: 'HEAD' });
+      const response = await fetch(this.preview, { method: 'HEAD' });
       // If status is 200-299, the file exists
       if (response.ok) {
         this.missing = false;
