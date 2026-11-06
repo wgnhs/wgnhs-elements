@@ -130,6 +130,7 @@ export class PDFViewPanel extends LitElement {
   }
 
   render() {
+    console.log("render pdf viewer")
     return html`
     <div class="controls">
       <button class="control" @click=${this.hide}><i class="material-icons" title="Hide">close</i></button>
@@ -326,6 +327,7 @@ export class PDFViewButton extends LitElement {
   }
 
   render() {
+    console.log("render pdf buttons")
     return html`
     <div class="container" ?data-closed=${this.missing}>
       <button-link href="${this.src}" target="_blank" download>
