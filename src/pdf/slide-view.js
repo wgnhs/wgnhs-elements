@@ -369,6 +369,7 @@ export class SlideViewButton extends LitElement {
   }
 
   toggle(e) {
+    console.log("toggle triggered");
     if (this.alt) {
       this.panel.hide();
     } else {

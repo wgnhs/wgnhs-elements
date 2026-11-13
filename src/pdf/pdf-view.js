@@ -1,51 +1,13 @@
 import { LitElement, html, css } from 'lit-element';
 import { styles } from 'wgnhs-common';
+import { PDFRenderer } from './pdf-renderer.js';
+import { SlideRenderer } from './slide-renderer.js';
 export { AppCollapsible } from 'wgnhs-layout';
 export { ButtonLink } from 'wgnhs-layout';
 export { AppSpinner } from 'wgnhs-layout';
 
 
-const pdfjsLib = window['pdfjs-dist/build/pdf'];
-
 const TOGGLE_EVENT = 'toggle-pdf-panel';
-
-class PDFRenderer {
-  render(url) {
-    if (url) {
-      let canvasEl = document.createElement('canvas');
-      let loadingTask = pdfjsLib.getDocument(url);
-      return loadingTask.promise.then(function(pdf) {
-        // console.log('PDF Loaded');
-        var pageNumber = 1;
-        return pdf.getPage(pageNumber);
-      }).then(function(page) {
-        // console.log('Page loaded');
-        
-        var scale = 1.0;
-        var viewport = page.getViewport({scale: scale});
-
-        // Prepare canvas using PDF page dimensions
-        var canvas = canvasEl;
-        var context = canvas.getContext('2d');
-        canvas.height = viewport.height;
-        canvas.width = viewport.width;
-
-        // Render PDF page into canvas context
-        var renderContext = {
-          canvasContext: context,
-          viewport: viewport
-        };
-        var renderTask = page.render(renderContext);
-        return renderTask.promise;
-      }).then(function () {
-        // console.log('Page rendered');
-        let durl = canvasEl.toDataURL();
-        return durl;
-      });
-    }
-    return Promise.reject(null);
-  }
-}
 
 export class PDFViewPanel extends LitElement {
   static get properties() {
@@ -72,9 +34,10 @@ export class PDFViewPanel extends LitElement {
   }
 
   constructor() {
+    console.log("panel constructor fired");
     super();
     this.cache = {};
-    this.renderer = new PDFRenderer();
+    //this.renderer = new PDFRenderer();
     this.rotate = PDFViewPanel.INITIAL_ROTATE;
     this.zoom = PDFViewPanel.INITIAL_ZOOM;
   }
@@ -130,7 +93,7 @@ export class PDFViewPanel extends LitElement {
   }
 
   render() {
-    console.log("render pdf viewer")
+    console.log("render viewer")
     return html`
     <div class="controls">
       <button class="control" @click=${this.hide}><i class="material-icons" title="Hide">close</i></button>
@@ -274,12 +237,21 @@ export class PDFViewPanel extends LitElement {
   }
 
   request(url) {
-    // console.log('request', url);
+    console.log('request', url);
     return this._getFromCache(url).catch(() => {
-      return this.renderer.render(url).then((value) => {
-        this.cache[url] = value;
-        this.requestUpdate('cache');
-        return value;
+        console.log("cache miss");
+        if(url.endsWith(".pdf")){
+          console.log("setting renderer to pdf");
+          this.renderer = new PDFRenderer();
+        }
+        if(url.endsWith(".jpg")){
+          console.log("setting renderer to slide");
+          this.renderer = new SlideRenderer();
+        }
+        return this.renderer.render(url).then((value) => {
+          this.cache[url] = value;
+          this.requestUpdate('cache');
+          return value;
       });
     });
   }
