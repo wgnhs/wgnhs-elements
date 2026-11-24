@@ -1,32 +1,47 @@
-export { Slider } from 'wgnhs-layout';
+import { LitElement, html, css } from 'lit-element';
+export { SlideSlider } from 'wgnhs-layout';
 const L = window['L'];
 
 export class SlideRenderer {
-  render(url) {
+  handleSlider(e, xpl) {
+    xpl.setOpacity(e.detail / 100);
+  }
+
+  render(url, panel) {
     console.log("slide renderer");
     if (url){
+      let containerDiv = document.createElement('div');
+      containerDiv.class = 'container';
+      let sliderDiv = document.createElement('slide-slider');
       let slideDiv = document.createElement('div');
-      slideDiv.id = 'modal-content';
+      slideDiv.id = 'map-container';
+      containerDiv.append(sliderDiv);
+      containerDiv.append(slideDiv);
+      console.log(containerDiv);
+      
       //let modalContent  = "<div id='sliderContainer'><label>PPL</label><div id='slider'><div class='ui-slider-handle'></div></div><label>XPL</label></div>";
-      let modalContent = "<slider></slider>"
-      modalContent += "<div id='photo'></div>";
-      slideDiv.append(modalContent);
-      console.log(slideDiv);
-      var thinSectionMap = new L.Map('sketch'
-                  , {crs: L.CRS.Simple, minZoom: -5}
+      //panel.append(sliderDiv);
+      //panel.append(slideDiv);
+      var thinSectionMap = new L.Map(slideDiv
+                  , {crs: L.CRS.Simple, minZoom: -3}
               );
             //.setView(new L.LatLng(0,0), 0);
       var photoWidth = 2700;
-        var photoHeight = 1800;
-        var bounds = [[0,0], [4000,6000]];
+      var photoHeight = 1800;
+      var bounds = [[0,0], [4000,6000]];
     
-        var ppl = L.imageOverlay(url, bounds).addTo(thinSectionMap);
-        var xpl = L.imageOverlay('https://data.wgnhs.wisc.edu/thin-section-photos/1xpl.jpg', bounds);
-        xpl.setOpacity(0.0).addTo(thinSectionMap);
-        thinSectionMap.fitBounds(bounds);
+      var ppl = L.imageOverlay(url, bounds).addTo(thinSectionMap);
+      var xpl = L.imageOverlay('https://data.wgnhs.wisc.edu/thin-section-photos/1xpl.jpg', bounds);
+      xpl.setOpacity(0.0).addTo(thinSectionMap);
+      thinSectionMap.fitBounds(bounds);
 
-      //console.log(thinSectionMap);
-      return Promise.resolve(url);
+      document.addEventListener('slider-change', (e) => {
+        console.log("slider input");
+        console.log(e.detail)
+        xpl.setOpacity(e.detail / 100);
+      });        
+      
+      return Promise.resolve(containerDiv);
       
       /*this.zoomifyThinSection(url);
 
@@ -63,6 +78,8 @@ export class SlideRenderer {
     return Promise.reject(null);
   }
 
+  
+
   /*zoomifyThinSection(url){
     console.log("showThinSection", id);
         var thinSectionMap = new L.Map('photo'
@@ -80,7 +97,7 @@ export class SlideRenderer {
         var xpl = L.imageOverlay(urlRoot + sectionNum + 'xpl.jpg', bounds);
         
         xpl.setOpacity(0.0).addTo(thinSectionMap);
-        c
+        thinSectionMap.fitBounds(bounds);
 
         $("#slider").slider({
             value: 0,

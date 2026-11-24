@@ -12,23 +12,11 @@ const TOGGLE_EVENT = 'toggle-pdf-panel';
 export class PDFViewPanel extends LitElement {
   static get properties() {
     return {
-      pdfsrc: {
-        type: String,
-        attribute: false
+      displayType: {
+        type: String
       },
-      rotate: {
-        type: Number
-      },
-      preserveRotate: {
-        type: Boolean,
-        attribute: 'preserve-rotate'
-      },
-      zoom: {
-        type: Number
-      },
-      preserveZoom: {
-        type: Boolean,
-        attribute: 'preserve-zoom'
+      sourceData: {
+        type: String
       }
     };
   }
@@ -38,53 +26,18 @@ export class PDFViewPanel extends LitElement {
     super();
     this.cache = {};
     //this.renderer = new PDFRenderer();
-    this.rotate = PDFViewPanel.INITIAL_ROTATE;
-    this.zoom = PDFViewPanel.INITIAL_ZOOM;
+    
   }
 
   static get styles() {
     return [
       ...styles,
       css`
-    .container {
-      min-height: 10em;
-      width: 100%;
-      display: grid;
-      grid-column-template: 1fr;
-      grid-gap: var(--border-radius);
-      justify-content: center;
-      overflow: auto;
-    }
+   
     .content {
       max-width: 100%;
       padding: var(--border-radius);
       box-sizing: border-box;
-    }
-    .controls {
-      display: grid;
-      grid-column-template: 1fr;
-      grid-gap: var(--border-radius);
-      position: absolute;
-      top: 0;
-      right: var(--border-radius);
-      margin: var(--border-radius);
-      z-index: 10;
-    }
-    .control {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      font-size: var(--icon-size-large);
-      color: var(--palette-accent);
-      text-align: center;
-      cursor: pointer;
-      padding: var(--border-radius);
-      background-color: var(--palette-light);
-      border: none;
-      border-radius: 50%;
-    }
-    .control:hover {
-      color: var(--el-color-hover, var(--palette-900));
     }
     [data-closed] {
       display: none;
@@ -104,112 +57,18 @@ export class PDFViewPanel extends LitElement {
     </div>
     <app-spinner ?data-closed=${this.imgsrc}></app-spinner>
     <div class="container" ?data-closed=${!this.imgsrc}>
-      ${this.imageTag}
+      ${this.imgsrc}
       <slot></slot>
     </div>
     `;
   }
 
-  get imgsrc() {
-    return this.cache[this.pdfsrc];
-  }
-
-  static get MOD_ROTATE() {
-    return 4;
-  }
-
-  static get INITIAL_ROTATE() {
-    return 0;
-  }
-
-  get rotate() {
-    return this._rotate;
-  }
-  set rotate(val) {
-    const old = this.rotate;
-    let rot = Math.round(val) + PDFViewPanel.MOD_ROTATE;
-    this._rotate = (rot % PDFViewPanel.MOD_ROTATE);
-    this.requestUpdate('rotate', old);
-  }
-
-  rotateLeft() {
-    this.rotate -= 1;
-  }
-  rotateRight() {
-    this.rotate += 1;
-  }
-
-  static get MAX_ZOOM() {
-    return 3;
-  }
-  get isMaxZoom() {
-    return this.zoom >= PDFViewPanel.MAX_ZOOM;
-  }
-
-  static get MIN_ZOOM() {
-    return 0.5;
-  }
-  get isMinZoom() {
-    return this.zoom <= PDFViewPanel.MIN_ZOOM;
-  }
-
-  static get INITIAL_ZOOM() {
-    return 1;
-  }
-
-  get zoom() {
-    return this._zoom;
-  }
-  set zoom(val) {
-    const old = this.zoom;
-    this._zoom = Math.min(Math.max(val, PDFViewPanel.MIN_ZOOM), PDFViewPanel.MAX_ZOOM);
-    this.requestUpdate('zoom', old);
-  }
-
-  zoomIn() {
-    this.zoom += 0.25;
-  }
-  zoomOut() {
-    this.zoom -= 0.25;
-  }
-
-  get translate() {
-    let result = {
-      x: 0,
-      y: 0
-    };
-    if (this.rotate) {
-      result.x = (this.rotate === 1)? 0 : (100 * this.zoom);
-      result.y = (this.rotate === 3)? 0 : (100 * this.zoom);
-    }
-    return result;
-  }
-
-  get imageTag() {
-    return (!this.imgsrc)?'':html`
-    <img class="content"
-      src="${this.imgsrc}"
-      style="${this.contentTransform}" />
-    `;
-  }
-
-  get contentTransform() {
-    let rot = this.rotate / PDFViewPanel.MOD_ROTATE;
-    let zoom = this.zoom;
-    let fix = this.translate;
-    let result = `
-      transform-origin: top left;
-      transform: rotate(${rot}turn) translate(-${fix.x}%, -${fix.y}%) scale(${zoom})
-      `;
-
-    return result;
-  }
-
-  show(url) {
+  show(src, displayType) {
     // console.log('show', url);
     this.dispatchEvent(new CustomEvent(TOGGLE_EVENT,
-      {bubbles: true, composed: true, detail: {url, closed: false}}));
-    this.pdfsrc = url;
+      {bubbles: true, composed: true, detail: {src, displayType, closed: false}}));
+    this.sourceData = src;
+    this.displayType = displayType;
     if (!this.preserveRotate) {
       this.rotate = PDFViewPanel.INITIAL_ROTATE;
     }
@@ -220,7 +79,8 @@ export class PDFViewPanel extends LitElement {
 
   hide() {
     // console.log('hide');
-    this.pdfsrc = null;
+    this.sourceData = null;
+    this.displayType = null;
     this.dispatchEvent(new CustomEvent(TOGGLE_EVENT,
       {bubbles: true, composed: true, detail: {closed: true}}));
   }
@@ -236,8 +96,36 @@ export class PDFViewPanel extends LitElement {
     });
   }
 
-  request(url) {
-    console.log('request', url);
+  request(sourceData, displayType) {
+    if(displayType == "gallery"){
+      const imageList = [
+        {
+          src: "https://data.wgnhs.wisc.edu/thin-section-photos/1xpl.jpg",
+          thumb: "https://data.wgnhs.wisc.edu/thin-section-photos/1ppl.jpg",
+          alt: "thin section thumbnail"
+        },
+        {
+          src: "https://data.wgnhs.wisc.edu/thin-section-photos/1xpl.jpg",
+          thumb: "https://data.wgnhs.wisc.edu/thin-section-photos/1ppl.jpg",
+          alt: "thin section thumbnail"
+        },
+        {
+          src: "https://data.wgnhs.wisc.edu/thin-section-photos/1xpl.jpg",
+          thumb: "https://data.wgnhs.wisc.edu/thin-section-photos/1ppl.jpg",
+          alt: "thin section thumbnail"
+        }
+      ];
+
+      console.log(imageList);
+
+      this.cache[url] = html`<div class="container">
+      <gallery-view id="viewer" .images="${imageList}"></gallery-view></div>`;
+    }
+    if(displayType == "pdf"){
+      this.cache[url] = html`<div class="container">
+      <pdf-view id="viewer" .pdfsrc="${sourceData}"></pdf-view></div>`
+
+    }
     return this._getFromCache(url).catch(() => {
         console.log("cache miss");
         if(url.endsWith(".pdf")){
@@ -248,7 +136,8 @@ export class PDFViewPanel extends LitElement {
           console.log("setting renderer to slide");
           this.renderer = new SlideRenderer();
         }
-        return this.renderer.render(url).then((value) => {
+        return this.renderer.render(url, panel).then((value) => {
+          console.log(value)
           this.cache[url] = value;
           this.requestUpdate('cache');
           return value;
@@ -263,6 +152,9 @@ export class PDFViewButton extends LitElement {
   static get properties() {
     return {
       src: {
+        type: String
+      },
+      displayType: {
         type: String
       },
       panel: {
@@ -291,7 +183,6 @@ export class PDFViewButton extends LitElement {
       grid-template-columns: 1fr 1fr;
       grid-gap: var(--border-radius);
     }
-
     [data-closed] {
       visibility: hidden;
     }
@@ -320,7 +211,7 @@ export class PDFViewButton extends LitElement {
     if ((prev.has('panel') || prev.has('src'))) {
       this.handleMissingPDF();
       if (this.panel && this.src) {
-        this.panel.request(this.src)
+        this.panel.request(this.src, this.displayType)
           .then(this.handleLoadedPDF.bind(this), this.handleMissingPDF.bind(this));
       }
     }
@@ -330,7 +221,7 @@ export class PDFViewButton extends LitElement {
     if (this.alt) {
       this.panel.hide();
     } else {
-      this.panel.show(this.src);
+      this.panel.show(this.src, this.displayType);
     }
   }
 

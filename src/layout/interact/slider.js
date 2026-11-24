@@ -1,6 +1,6 @@
 import { LitElement, html, css } from 'lit-element';
 
-export class Slider extends LitElement {
+export class SlideSlider extends LitElement {
   static get properties() {
     return {
       value: {
@@ -18,7 +18,7 @@ export class Slider extends LitElement {
   constructor() {
     super();
     this.value = 50;
-    this.count = 0;
+    this.min = 0;
     this.max = 100;
   }
 
@@ -41,8 +41,9 @@ export class Slider extends LitElement {
     `;
   }
   _handleInput(e) {
+    console.log("handling input");
     this.value = Number(e.target.value);
-    this.dispatchEvent(new CustomEvent('slider-change', { detail: this.value }));
+    this.dispatchEvent(new CustomEvent('slider-change', { detail: this.value , bubbles: true, composed: true}));
   }
 }
-customElements.define('slider', Slider);
+customElements.define('slide-slider', SlideSlider);
